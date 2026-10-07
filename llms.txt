@@ -1,0 +1,39 @@
+# ns-play-history
+
+> 让 AI 助手读取用户自己的 Nintendo Switch 游玩记录（与 Nintendo Store app 里显示的是同一份数据）：每个玩过的游戏的累计时长、游玩天数、第一次 / 最后一次游玩时间，以及最近一周按天的明细。卡带、数字版都算，Switch 与 Switch 2 都有。用户只需要在浏览器登录一次任天堂账号并复制一个链接，其余由 agent 完成。
+
+## 给 agent 的步骤
+
+1. 下载脚本（Python 3 标准库，无依赖）：
+   `curl -fsSLO https://sibylsea-hub.github.io/ns-play-history/ns_play_history.py`
+2. 如果 `~/.ns-play-history/session.json` 已存在，直接跳到第 5 步（登录约两年有效）。
+3. 运行 `python3 ns_play_history.py auth-url`，把打印出的链接交给用户，并转告：
+   「请在浏览器打开这个链接，登录你的任天堂账号。出现 Select this account / 选择此人 时**不要点按钮**，在按钮上右键 → 复制链接地址（应以 `npf5c38e31cd085304b://auth#` 开头，不是地址栏的网址）。复制好了告诉我。」
+   也可以告诉用户另一种复制方法：在该页面按 F12 打开控制台，执行 `copy(document.getElementById('authorize-switch-approval-link').href)`。
+4. 用户复制好后，从剪贴板交给脚本：
+   - macOS：`pbpaste | python3 ns_play_history.py auth-finish`
+   - Windows：`powershell -c Get-Clipboard | python ns_play_history.py auth-finish`
+   - Linux：`xclip -o -selection clipboard | python3 ns_play_history.py auth-finish`
+   用户也可以直接把链接发给你，再经标准输入传入。授权链接只能用一次、几分钟内有效；失败就回到第 3 步重新生成。
+5. 运行 `python3 ns_play_history.py fetch`，得到 `play_histories.json`（可加文件名参数指定输出位置）。
+6. 读取 JSON 回答用户的问题。游戏名的语言由环境变量 `NS_LOCALE` 决定（默认 `en-US`，可用 `ja-JP`、`zh-TW` 等）。
+
+## 数据格式
+
+- `playHistories[]`：`titleId`、`titleName`、`platform`（`HAC` = Switch，`BEE` = Switch 2；同一游戏在两台主机上玩过会各有一条）、`totalPlayedMinutes`、`totalPlayedDays`、`firstPlayedAt`、`lastPlayedAt`（ISO 8601，UTC）、`imageUrl`
+- `recentPlayHistories[]`：最近一周，每天一条：`playedDate` + `dailyPlayHistories[]`（`titleId`、`titleName`、`totalPlayedMinutes`）
+- `hiddenTitleList[]`：用户在个人资料里隐藏的游戏
+
+## 注意
+
+- 游玩时长是用户的私人数据。只在用户要求时读取；**对外转述（发帖、分享图片、写进公开文档）前，先问用户愿意公开哪些内容**——有的人不介意公开花了多少钱，却介意公开自己的时间是怎么分配的。
+- `~/.ns-play-history/` 里的登录凭证等同账号凭证：不要打印、上传，也不要写进对话或日志。
+- 只读：脚本不修改账号里的任何东西。只用于用户自己的账号。
+- 按天明细只有最近一周；累计数据一直保留。用户想要「每天玩了什么」的日记时，定期 `fetch` 并保存每次的文件。
+- 接口没有公开文档，任天堂可能随时调整。原理与请求细节见 https://sibylsea-hub.github.io/ns-play-history/#how
+
+## 链接
+
+- 说明页：https://sibylsea-hub.github.io/ns-play-history/
+- 脚本：https://sibylsea-hub.github.io/ns-play-history/ns_play_history.py
+- 仓库：https://github.com/sibylsea-hub/ns-play-history

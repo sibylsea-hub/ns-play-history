@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Sibyl (sibylsea-hub)
-"""查看你自己的 Nintendo Switch 游玩记录（与 Nintendo Store app 里显示的是同一份数据）。
+"""让你的 AI 助手看到你的 Nintendo Switch 游玩记录（与 Nintendo Store app 里显示的是同一份数据）。
 
-只用 Python 3 标准库，无需安装依赖。
+只用 Python 3 标准库，无需安装依赖。给 agent 用的分步命令：
 
-  python3 ns_play_history.py login    # 一次性：在浏览器登录任天堂账号 → 粘贴授权链接 → 保存登录凭证（约两年有效）
-  python3 ns_play_history.py fetch    # 读取全部游玩记录，存成 play_histories.json 并打印排行
+  python3 ns_play_history.py auth-url          # 打印任天堂登录链接（交给用户在浏览器里打开）
+  <授权链接> | python3 ns_play_history.py auth-finish
+                                              # 从标准输入读用户复制的授权链接，保存登录凭证（约两年有效）
+                                              # macOS: pbpaste | …   Windows: powershell Get-Clipboard | …
+  python3 ns_play_history.py fetch [文件名]     # 导出全部游玩记录为 JSON（默认 play_histories.json）
+
+人自己用的话：python3 ns_play_history.py login（交互式，一步到位）。
 
 登录凭证存在 ~/.ns-play-history/（目录 700、文件 600），等同于账号凭证，请勿外传。
 该接口没有公开文档，可能随时变化；请只用于查看你自己的账号。
@@ -24,7 +29,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-# 任天堂账号登录：使用 Nintendo Store app 的登录入口，所以授权页会显示「关联到 Nintendo Store」
+# 任天堂账号登录：使用 Nintendo Store app 的登录入口，所以确认页会显示「关联到 Nintendo Store」
 CLIENT_ID = "5c38e31cd085304b"
 REDIRECT_URI = f"npf{CLIENT_ID}://auth"
 SCOPE = "openid user user.mii user.email user.links[].id"
@@ -33,7 +38,7 @@ ACCOUNTS = "https://accounts.nintendo.com/connect/1.0.0"
 # Nintendo Store app 读取游玩记录的接口；gentry-locale 头必填（决定游戏名的语言）
 API = "https://app-api.znej.nintendo.com/api/v2.0/users/me/play_histories"
 LOCALE = os.environ.get("NS_LOCALE", "en-US")
-USER_AGENT = "ns-play-history/1.0"
+USER_AGENT = "ns-play-history/1.1"
 
 HOME = Path.home() / ".ns-play-history"
 
@@ -63,11 +68,20 @@ def request(method: str, url: str, headers: dict, body: bytes = None):
         return e.code, e.read()
 
 
-def login() -> None:
+HOW_TO_COPY = (
+    "登录后会出现「Select this account / 选择此人」页面：不要点按钮，在按钮上右键 → 复制链接地址；\n"
+    "或按 F12 打开控制台执行：copy(document.getElementById('authorize-switch-approval-link').href)\n"
+    f"复制到的应以 {REDIRECT_URI}# 开头（不是地址栏里的网址）。"
+)
+
+
+def auth_url() -> str:
+    """生成登录链接，并把 PKCE 的 verifier/state 存起来等 auth-finish 用。"""
     verifier = b64url(os.urandom(32))
     state = b64url(os.urandom(36))
     challenge = b64url(hashlib.sha256(verifier.encode()).digest())
-    url = f"{ACCOUNTS}/authorize?" + urllib.parse.urlencode({
+    save_secret("pending.json", {"verifier": verifier, "state": state})
+    return f"{ACCOUNTS}/authorize?" + urllib.parse.urlencode({
         "state": state,
         "redirect_uri": REDIRECT_URI,
         "client_id": CLIENT_ID,
@@ -76,32 +90,30 @@ def login() -> None:
         "session_token_code_challenge": challenge,
         "session_token_code_challenge_method": "S256",
     })
-    print("1) 用浏览器打开下面的链接，登录你的任天堂账号：\n")
-    print(url)
-    print("\n2) 出现「Select this account / 选择此人」时【不要点按钮】。")
-    print("   在按钮上右键 → 复制链接地址；或按 F12 打开控制台，执行：")
-    print("   copy(document.getElementById('authorize-switch-approval-link').href)")
-    print(f"   复制到的应以 {REDIRECT_URI}# 开头。\n")
-    link = getpass.getpass("3) 粘贴授权链接（输入不回显）：").strip()
 
+
+def auth_finish(link: str) -> None:
+    pending = load_secret("pending.json")
+    if not pending:
+        sys.exit("没有待完成的登录：先运行 auth-url")
+    link = link.strip()
     if not link.startswith(REDIRECT_URI + "#"):
-        sys.exit("这不是授权链接：应以 " + REDIRECT_URI + "# 开头（别复制成地址栏）")
+        sys.exit(f"这不是授权链接：应以 {REDIRECT_URI}# 开头（常见错误：复制成了地址栏）")
     frag = urllib.parse.parse_qs(link.split("#", 1)[1])
-    if frag.get("state", [None])[0] != state:
-        sys.exit("state 不匹配：请用本次打印的链接重新登录")
-    code = frag["session_token_code"][0]
-
+    if frag.get("state", [None])[0] != pending["state"]:
+        sys.exit("state 不匹配：这条链接不是最近一次 auth-url 生成的，请重新 auth-url")
     status, body = request("POST", f"{ACCOUNTS}/api/session_token", {
         "Content-Type": "application/x-www-form-urlencoded",
     }, urllib.parse.urlencode({
         "client_id": CLIENT_ID,
-        "session_token_code": code,
-        "session_token_code_verifier": verifier,
+        "session_token_code": frag["session_token_code"][0],
+        "session_token_code_verifier": pending["verifier"],
     }).encode())
     if status != 200:
-        sys.exit(f"保存登录失败：HTTP {status} {body[:200]!r}")
+        sys.exit(f"保存登录失败：HTTP {status} {body[:200]!r}（授权链接只能用一次、几分钟内有效，可重新 auth-url）")
     save_secret("session.json", {"session_token": json.loads(body)["session_token"]})
-    print(f"\n✅ 登录完成，凭证已存到 {HOME}/session.json（约两年有效）。接下来运行：python3 {sys.argv[0]} fetch")
+    (HOME / "pending.json").unlink(missing_ok=True)
+    print(f"ok: 登录凭证已保存到 {HOME}/session.json（约两年有效）")
 
 
 def access_token() -> str:
@@ -110,7 +122,7 @@ def access_token() -> str:
         return cached["token"]
     session = load_secret("session.json")
     if not session:
-        sys.exit("还没登录：先运行 login")
+        sys.exit("还没登录：先运行 auth-url / auth-finish（或 login）")
     status, body = request("POST", f"{ACCOUNTS}/api/token", {
         "Content-Type": "application/json; charset=utf-8",
     }, json.dumps({
@@ -119,13 +131,13 @@ def access_token() -> str:
         "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer-session-token",
     }).encode())
     if status != 200:
-        sys.exit(f"获取访问凭证失败：HTTP {status} {body[:200]!r}（登录过期的话重新 login）")
+        sys.exit(f"获取访问凭证失败：HTTP {status} {body[:200]!r}（登录过期的话重新登录）")
     data = json.loads(body)
     save_secret("access.json", {"token": data["access_token"], "expires_at": time.time() + data.get("expires_in", 900)})
     return data["access_token"]
 
 
-def fetch() -> None:
+def fetch(out: str = "play_histories.json") -> None:
     status, body = request("GET", API, {
         "Authorization": f"Bearer {access_token()}",
         "Accept": "application/json",
@@ -133,14 +145,35 @@ def fetch() -> None:
     })
     if status != 200:
         sys.exit(f"HTTP {status} {body[:300]!r}")
-    Path("play_histories.json").write_bytes(body)
+    Path(out).write_bytes(body)
     data = json.loads(body)
-    games = sorted(data.get("playHistories", []), key=lambda g: -g.get("totalPlayedMinutes", 0))
-    print(f"共 {len(games)} 个游戏，已保存到 play_histories.json\n")
-    for i, g in enumerate(games[:20], 1):
-        print(f"{i:>3}. {g['totalPlayedMinutes'] / 60:7.1f} h  {g['totalPlayedDays']:>4} 天  "
-              f"{g['firstPlayedAt'][:10]} → {g['lastPlayedAt'][:10]}  {g['titleName']}")
+    games = data.get("playHistories", [])
+    print(f"ok: {len(games)} 个游戏 → {out}"
+          f"（字段：titleName, platform, totalPlayedMinutes, totalPlayedDays, firstPlayedAt, lastPlayedAt；"
+          f"recentPlayHistories 为最近一周按天）")
+
+
+def login() -> None:
+    """给人用的交互式登录：auth-url + auth-finish 合在一起。"""
+    print("1) 用浏览器打开下面的链接，登录你的任天堂账号：\n\n" + auth_url() + "\n")
+    print("2) " + HOW_TO_COPY + "\n")
+    auth_finish(getpass.getpass("3) 粘贴授权链接（输入不回显）："))
+
+
+def main() -> None:
+    cmd, rest = (sys.argv[1:] or [""])[0], sys.argv[2:]
+    if cmd == "auth-url":
+        print(auth_url())
+        print("\n" + HOW_TO_COPY, file=sys.stderr)
+    elif cmd == "auth-finish":
+        auth_finish(sys.stdin.read() if not sys.stdin.isatty() else getpass.getpass("粘贴授权链接："))
+    elif cmd == "fetch":
+        fetch(*rest[:1])
+    elif cmd == "login":
+        login()
+    else:
+        sys.exit(__doc__)
 
 
 if __name__ == "__main__":
-    {"login": login, "fetch": fetch}.get((sys.argv[1:] or [""])[0], lambda: sys.exit(__doc__))()
+    main()
