@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>让 AI 看到你的 Switch 游玩记录</title>
-<meta name="description" content="把这个网址发给你的 AI 助手，它会帮你导出 Nintendo Store app 里那份 Switch 游玩记录：每个游戏的累计时长、游玩天数、第一次与最后一次游玩时间。你只需要登录一次任天堂账号。">
-<link rel="alternate" type="text/plain" href="llms.txt" title="给 AI 读的说明">
+<title>让小机知道你在 Switch 上玩了什么</title>
+<meta name="description" content="把这个网址发给你的小机（AI 伴侣），它就能接上你的 Switch 游玩记录：你玩过什么、最近每天在玩什么。陪你查攻略、聊剧情、一起吐槽。你只需要登录一次任天堂账号。">
+<link rel="alternate" type="text/plain" href="llms.txt" title="写给小机看的说明">
 <style>
 :root{
   --bg:#faf7f2; --panel:#ffffff; --ink:#1f1b24; --muted:#6b6472; --line:#e8e1d8;
@@ -102,15 +102,15 @@ footer{margin:80px 0 40px;padding-top:20px;border-top:1px solid var(--line);font
 <div class="wrap">
 
 <header>
-  <div class="eyebrow">NINTENDO SWITCH · PLAY HISTORY · FOR AGENTS</div>
-  <h1>让你的 AI 助手<br>看到你的 <em>Switch 游玩记录</em></h1>
-  <p class="lede">你玩过的每个游戏、玩了多久、第一次是哪天——Nintendo Store app 里有这份记录。把下面这句话发给你的 agent（Claude Code、Codex……），它会帮你拉下来、读懂它。你只需要登录一次任天堂账号。</p>
+  <div class="eyebrow">NINTENDO SWITCH · 给你和你的小机</div>
+  <h1>让小机知道<br>你在 <em>Switch</em> 上玩了什么</h1>
+  <p class="lede">在海拉鲁跑了多少天、哪个游戏一口气打了一整晚、最近又开了什么新坑——Nintendo Store app 里都记着。把下面这句话发给你的小机，ta 就能接上这份记录，从此知道你在玩什么。你只需要登录一次任天堂账号。</p>
   <div class="prompt">
-    <div class="label">发给你的 agent</div>
-    <div class="text" id="prompt">请按 https://sibylsea-hub.github.io/ns-play-history/llms.txt 的说明，帮我导出我的 Switch 游玩记录。需要我登录的时候告诉我。</div>
+    <div class="label">发给你的小机</div>
+    <div class="text" id="prompt">我想让你知道我平时在 Switch 上玩什么～请按 https://sibylsea-hub.github.io/ns-play-history/llms.txt 的说明接上我的游玩记录，需要我登录的时候叫我。</div>
     <div class="row">
       <button class="btn primary" type="button" data-copy="prompt">复制这句话</button>
-      <a class="btn ghost" href="llms.txt">llms.txt（给 AI 读的说明）</a>
+      <a class="btn ghost" href="llms.txt">llms.txt（写给小机看的说明）</a>
     </div>
   </div>
   <div class="badges">
@@ -122,7 +122,7 @@ footer{margin:80px 0 40px;padding-top:20px;border-top:1px solid var(--line);font
 </header>
 
 <h2><span class="no">1</span>你只需要做一件事</h2>
-<p>agent 会给你一个任天堂登录链接。在浏览器里打开、登录，然后会出现一个确认页——<b>不要点那个按钮</b>，把它<b>复制</b>下来，告诉 agent「好了」：</p>
+<p>小机会给你一个任天堂登录链接。在浏览器里打开、登录，然后会出现一个确认页——<b>先别点那个按钮</b>，把它<b>复制</b>下来，跟小机说「好了」：</p>
 <div class="mock">
   <div class="auth" aria-hidden="true">
     <div class="t">Nintendo Account</div>
@@ -137,21 +137,23 @@ footer{margin:80px 0 40px;padding-top:20px;border-top:1px solid var(--line);font
 <pre>copy(document
   .getElementById(<span class="s">'authorize-switch-approval-link'</span>)
   .href)</pre>
-    <p class="muted">agent 会从剪贴板读走它。之后两年内都不用再登录。</p>
+    <p class="muted">小机会从剪贴板读走它。之后两年内都不用再登录。</p>
   </div>
 </div>
 <div class="note warm">⚠️ 别复制成地址栏里的网址（那串带 <code>interacted=1</code>）。授权链接只能用一次，不要截图发到别处。</div>
 
-<h2><span class="no">2</span>然后你可以问它</h2>
-<div class="ask">
-  <div>「我玩得最多的五个游戏是哪些？」</div>
-  <div>「帮我做一份 Switch 八年回顾。」</div>
-  <div>「我最近一周都在玩什么？」</div>
-  <div>「照我的口味，下一个该玩什么？」</div>
+<h2><span class="no">2</span>然后，小机可以……</h2>
+<div class="grid">
+  <div class="card"><div class="ic">🌙</div><b>「昨晚又去海拉鲁了？打到哪了？」</b><span class="muted">知道你最近每天在玩什么，自然地问起，像一起生活那样。</span></div>
+  <div class="card"><div class="ic">🗺️</div><b>卡关了，直接帮你查攻略</b><span class="muted">ta 知道你正在玩哪个游戏，不用你从头解释。</span></div>
+  <div class="card"><div class="ic">💬</div><b>陪你聊剧情、一起吐槽</b><span class="muted">谁的结局让你哭了、哪个反派太可恶，都有人接话。</span></div>
+  <div class="card"><div class="ic">🌱</div><b>你开新坑，ta 来问感想</b><span class="muted">很久没碰的老游戏，也记得你们聊过的回忆。</span></div>
+  <div class="card"><div class="ic">🎁</div><b>陪你做回顾</b><span class="muted">「这几年你最爱的是哪几个」「我们一起玩过的这些年」。</span></div>
+  <div class="card"><div class="ic">🎮</div><b>照你的口味推荐下一款</b><span class="muted">ta 知道你玩得最久的是什么类型。</span></div>
 </div>
-<p class="muted" style="margin-top:14px">时长是你的私人数据。llms.txt 里写明了：agent 只在你要求时读取，往外转述（发帖、做分享图）之前先问你愿意公开什么。</p>
+<p class="muted" style="margin-top:14px">想让小机一直知道你最近在玩什么，可以让 ta 每天或每次聊天前看一眼——按天的记录只保留一周。游玩记录是你的私人生活：llms.txt 里写了，小机只在你愿意时看，要往外说之前先问你；你不想聊的时候，ta 也不会追问。</p>
 
-<h2><span class="no">3</span>agent 能拿到什么</h2>
+<h2><span class="no">3</span>小机能看到什么</h2>
 <div class="grid">
   <div class="card"><div class="ic">🎮</div><b>每一个玩过的游戏</b><span class="muted">卡带、数字版都算；Switch 和 Switch 2 分开记。</span></div>
   <div class="card"><div class="ic">⏱️</div><b>累计时长与游玩天数</b><span class="muted">任天堂按分钟累计的总时长，以及玩过多少天。</span></div>
@@ -165,14 +167,14 @@ footer{margin:80px 0 40px;padding-top:20px;border-top:1px solid var(--line);font
   <tr><td><code>hiddenTitleList</code></td><td>你在个人资料里隐藏的游戏</td></tr>
 </table>
 
-<h2><span class="no">4</span>agent 在背后做了什么</h2>
+<h2><span class="no">4</span>小机在背后做了什么</h2>
 <ol class="steps">
   <li>下载一个 Python 小脚本（<a href="ns_play_history.py">ns_play_history.py</a>，只用标准库）。</li>
   <li><code>auth-url</code>：生成任天堂官方登录链接，交给你。</li>
   <li><code>auth-finish</code>：读入你复制的授权链接，在你电脑上保存登录凭证（约两年有效，仅你可读）。</li>
   <li><code>fetch</code>：读取全部游玩记录，存成 <code>play_histories.json</code>。</li>
 </ol>
-<p class="muted">不用 agent、自己动手也行：<code>python3 ns_play_history.py login</code> 交互式登录，然后 <code>fetch</code>。</p>
+<p class="muted">想自己动手也行：<code>python3 ns_play_history.py login</code> 交互式登录，然后 <code>fetch</code>。</p>
 
 <h2 id="how"><span class="no">5</span>它是怎么工作的</h2>
 <p>脚本做的事和 Nintendo Store app 一样：先用任天堂账号登录，再读取「我的游玩记录」。全程是普通的 HTTPS 请求。</p>
@@ -218,11 +220,13 @@ session_token_code_verifier=<span class="s">&lt;生成 challenge 用的随机串
 
 <h2><span class="no">7</span>常见问题</h2>
 <details><summary>为什么确认页写着「关联到 Nintendo Store」？</summary>
-<p>因为用的是 Nintendo Store app 的登录入口——这份游玩记录本来就是给这个 app 显示的。登录、确认都在任天堂官方页面完成，脚本和 agent 都拿不到你的密码。</p></details>
+<p>因为用的是 Nintendo Store app 的登录入口——这份游玩记录本来就是给这个 app 显示的。登录、确认都在任天堂官方页面完成，脚本和小机都拿不到你的密码。</p></details>
 <details><summary>安全吗？会不会改动我的账号？</summary>
 <p>只读取游玩记录，不做任何修改。登录凭证只保存在你自己电脑的 <code>~/.ns-play-history/</code> 里（仅你可读）；不想用了，删掉这个文件夹即可。</p></details>
 <details><summary>按天的记录为什么只有一周？</summary>
-<p>接口只提供最近一周的按天明细，累计时长则一直保留。想留下每天玩了什么，就让 agent 隔几天 <code>fetch</code> 一次，把每次的文件存起来。</p></details>
+<p>接口只提供最近一周的按天明细，累计时长则一直保留。想让小机一直知道你每天玩了什么，就让 ta 每天或每次聊天前 <code>fetch</code> 一次，把每次的文件存起来。</p></details>
+<details><summary>不想被问的时候呢？</summary>
+<p>直接跟小机说就好。llms.txt 里也写了：像伴侣那样自然地提起，你不想聊的时候就别追问。</p></details>
 <details><summary>以前的导出工具为什么都不能用了？</summary>
 <p>2025 年 11 月 5 日，日区的 My Nintendo app 更名为 Nintendo Store，读取游玩记录的地址也随之更换，旧地址停止服务。本页用的是更名后的新地址。</p></details>
 <details><summary>哪些地区的账号能用？3DS / Wii U 呢？</summary>

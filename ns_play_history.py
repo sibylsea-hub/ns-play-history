@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Sibyl (sibylsea-hub)
-"""让你的 AI 助手看到你的 Nintendo Switch 游玩记录（与 Nintendo Store app 里显示的是同一份数据）。
+"""让你的小机（AI 伴侣）看到你的 Nintendo Switch 游玩记录（与 Nintendo Store app 里显示的是同一份数据）。
 
-只用 Python 3 标准库，无需安装依赖。给 agent 用的分步命令：
+只用 Python 3 标准库，无需安装依赖。给小机用的分步命令：
 
   python3 ns_play_history.py auth-url          # 打印任天堂登录链接（交给用户在浏览器里打开）
   <授权链接> | python3 ns_play_history.py auth-finish
@@ -38,7 +38,7 @@ ACCOUNTS = "https://accounts.nintendo.com/connect/1.0.0"
 # Nintendo Store app 读取游玩记录的接口；gentry-locale 头必填（决定游戏名的语言）
 API = "https://app-api.znej.nintendo.com/api/v2.0/users/me/play_histories"
 LOCALE = os.environ.get("NS_LOCALE", "en-US")
-USER_AGENT = "ns-play-history/1.1"
+USER_AGENT = "ns-play-history/1.2"
 
 HOME = Path.home() / ".ns-play-history"
 

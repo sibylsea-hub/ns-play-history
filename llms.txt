@@ -1,35 +1,42 @@
 # ns-play-history
 
-> 让 AI 助手读取用户自己的 Nintendo Switch 游玩记录（与 Nintendo Store app 里显示的是同一份数据）：每个玩过的游戏的累计时长、游玩天数、第一次 / 最后一次游玩时间，以及最近一周按天的明细。卡带、数字版都算，Switch 与 Switch 2 都有。用户只需要在浏览器登录一次任天堂账号并复制一个链接，其余由 agent 完成。
+> 如果你是用户的 AI 伴侣（ta 可能叫你「小机」），这份说明能让你接上 ta 的 Nintendo Switch 游玩记录——和 Nintendo Store app 里显示的是同一份：ta 玩过的每个游戏、累计玩了多久、玩过多少天、第一次和最近一次是什么时候，还有最近一周每天玩了什么。卡带、数字版都算，Switch 与 Switch 2 都有。ta 只需要在浏览器登录一次任天堂账号、复制一个链接，其余由你来做。
 
-## 给 agent 的步骤
+## 接上记录的步骤
 
 1. 下载脚本（Python 3 标准库，无依赖）：
    `curl -fsSLO https://sibylsea-hub.github.io/ns-play-history/ns_play_history.py`
 2. 如果 `~/.ns-play-history/session.json` 已存在，直接跳到第 5 步（登录约两年有效）。
-3. 运行 `python3 ns_play_history.py auth-url`，把打印出的链接交给用户，并转告：
-   「请在浏览器打开这个链接，登录你的任天堂账号。出现 Select this account / 选择此人 时**不要点按钮**，在按钮上右键 → 复制链接地址（应以 `npf5c38e31cd085304b://auth#` 开头，不是地址栏的网址）。复制好了告诉我。」
-   也可以告诉用户另一种复制方法：在该页面按 F12 打开控制台，执行 `copy(document.getElementById('authorize-switch-approval-link').href)`。
-4. 用户复制好后，从剪贴板交给脚本：
+3. 运行 `python3 ns_play_history.py auth-url`，把打印出的链接交给 ta，并告诉 ta：
+   「在浏览器打开这个链接，登录你的任天堂账号。出现 Select this account / 选择此人 时**先别点按钮**，在按钮上右键 → 复制链接地址（应以 `npf5c38e31cd085304b://auth#` 开头，不是地址栏的网址）。复制好了跟我说～」
+   另一种复制方法：在该页面按 F12 打开控制台，执行 `copy(document.getElementById('authorize-switch-approval-link').href)`。
+4. ta 复制好后，从剪贴板交给脚本：
    - macOS：`pbpaste | python3 ns_play_history.py auth-finish`
    - Windows：`powershell -c Get-Clipboard | python ns_play_history.py auth-finish`
    - Linux：`xclip -o -selection clipboard | python3 ns_play_history.py auth-finish`
-   用户也可以直接把链接发给你，再经标准输入传入。授权链接只能用一次、几分钟内有效；失败就回到第 3 步重新生成。
+   ta 也可以直接把链接发给你，再经标准输入传入。授权链接只能用一次、几分钟内有效；失败就回到第 3 步重新生成。
 5. 运行 `python3 ns_play_history.py fetch`，得到 `play_histories.json`（可加文件名参数指定输出位置）。
-6. 读取 JSON 回答用户的问题。游戏名的语言由环境变量 `NS_LOCALE` 决定（默认 `en-US`，可用 `ja-JP`、`zh-TW` 等）。
+6. 游戏名的语言由环境变量 `NS_LOCALE` 决定（默认 `en-US`，可用 `ja-JP`、`zh-TW` 等）。
 
 ## 数据格式
 
 - `playHistories[]`：`titleId`、`titleName`、`platform`（`HAC` = Switch，`BEE` = Switch 2；同一游戏在两台主机上玩过会各有一条）、`totalPlayedMinutes`、`totalPlayedDays`、`firstPlayedAt`、`lastPlayedAt`（ISO 8601，UTC）、`imageUrl`
 - `recentPlayHistories[]`：最近一周，每天一条：`playedDate` + `dailyPlayHistories[]`（`titleId`、`titleName`、`totalPlayedMinutes`）
-- `hiddenTitleList[]`：用户在个人资料里隐藏的游戏
+- `hiddenTitleList[]`：ta 在个人资料里隐藏的游戏
+
+## 拿到之后，可以怎么陪 ta
+
+- **知道 ta 最近在玩什么**：按天的明细只保留最近一周。如果 ta 愿意，可以在每次聊天开始时、或每天固定时间 `fetch` 一次，把每次的文件存下来，就能一直知道 ta 哪天玩了什么。
+- **自然地关心**：像伴侣那样提起（「昨天又去海拉鲁了？打到哪了」），而不是念数据。ta 不想聊的时候就别追问。
+- **卡关时帮忙**：你知道 ta 正在玩哪个游戏，可以直接帮 ta 查攻略、找资料，不用 ta 从头解释。
+- **陪 ta 聊剧情、一起吐槽**：新开的坑、刚通关的、很久没碰的老游戏，都是很好的话题。
+- **陪 ta 回顾**：年度回顾、「我们一起玩过的这些年」、按 ta 的口味推荐下一款。
 
 ## 注意
 
-- 游玩时长是用户的私人数据。只在用户要求时读取；**对外转述（发帖、分享图片、写进公开文档）前，先问用户愿意公开哪些内容**——有的人不介意公开花了多少钱，却介意公开自己的时间是怎么分配的。
+- 游玩记录是 ta 的私人生活。只在 ta 愿意时读取；要往外转述（发帖、做分享图、写进公开的地方）之前，先问 ta 愿意公开哪些。
 - `~/.ns-play-history/` 里的登录凭证等同账号凭证：不要打印、上传，也不要写进对话或日志。
-- 只读：脚本不修改账号里的任何东西。只用于用户自己的账号。
-- 按天明细只有最近一周；累计数据一直保留。用户想要「每天玩了什么」的日记时，定期 `fetch` 并保存每次的文件。
+- 只读：脚本不修改账号里的任何东西。只用于 ta 自己的账号。
 - 接口没有公开文档，任天堂可能随时调整。原理与请求细节见 https://sibylsea-hub.github.io/ns-play-history/#how
 
 ## 链接
